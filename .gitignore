@@ -1,0 +1,4 @@
+# Exclude data sets
+demand/*
+sources/*
+amazon.csv
