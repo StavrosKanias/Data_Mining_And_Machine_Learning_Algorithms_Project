@@ -6,14 +6,16 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    demand = glob.glob("demand/*.csv")
-    demand.sort()
-    osSlash = demand[0][6]
+    demands = glob.glob("demand/*.csv")
+    sources = glob.glob("source/*.csv")
+    sources.sort()
+    demands.sort()
+    osSlash = demands[0][6]
     days = []
     means = []
-    for file in demand:
-        year, month, day = file.split(osSlash)[1][:4], file.split(osSlash)[
-            1][4:6], file.split(osSlash)[1][6:8]
+    for demand, source in zip(demands, sources):
+        year, month, day = demand.split(osSlash)[1][:4], demand.split(osSlash)[
+            1][4:6], demand.split(osSlash)[1][6:8]
         # Check if day exists
         try:
             date = datetime.strptime(
@@ -22,8 +24,9 @@ def main():
             continue
 
         # Read csv
-        df = pandas.read_csv(file)
-        mean = dayMeanValue(df)
+        dfDemand = pandas.read_csv(demand)
+        dfSource = pandas.read_csv(source)
+        mean = dayMeanDemand(dfDemand)
         days.append(date)
         means.append(mean)
     ourDf = pandas.DataFrame({"Day": days, "Mean": means})
@@ -59,7 +62,12 @@ def plotdf(df):
     plt.show()
 
 
-def dayMeanValue(df):
+def dayMeanSource(df):
+    keys = list(df.columns.values)
+    base = len(df[keys[-1]])
+
+
+def dayMeanDemand(df):
     keys = list(df.columns.values)
     base = len(df[keys[-1]])
     total = 0
