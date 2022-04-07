@@ -2,6 +2,7 @@ import pandas
 import glob
 from datetime import datetime
 import math
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -26,7 +27,36 @@ def main():
         days.append(date)
         means.append(mean)
     ourDf = pandas.DataFrame({"Day": days, "Mean": means})
-    print(ourDf)
+    plotdf(ourDf)
+
+
+def plotdf(df):
+    days = []
+    means = []
+    total = []
+    prevyear = '2019'
+    plt.figure(0)
+    cnt = 0
+    for day, mean in zip(df["Day"], df["Mean"]):
+        year = str(day)[:4]
+        if prevyear == year:
+            days.append(day)
+            means.append(mean)
+        else:
+            cnt += 1
+            prevyear = year
+            plt.subplot(3, 1, cnt)
+            plt.plot_date(days, means, "b-", xdate=True)
+            plt.plot_date(days, means, "r.", xdate=True)
+            total.append((list(days), list(means)))
+            days.clear()
+            means.clear()
+            days.append(day)
+            means.append(mean)
+    plt.subplot(3, 1, 3)
+    plt.plot_date(days, means, "b-", xdate=True)
+    plt.plot_date(days, means, "r.", xdate=True)
+    plt.show()
 
 
 def dayMeanValue(df):
