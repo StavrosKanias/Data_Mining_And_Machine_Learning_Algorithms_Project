@@ -1,11 +1,23 @@
 import pandas
 import glob
-
+from datetime import datetime
 
 def main():
     demand = glob.glob("demand/*.csv")
-    print(demand)
-
+    demand.sort()
+    ourDf = pandas.DataFrame()
+    for file in demand:
+        year , month , day = file.split('/')[1][:4] , file.split('/')[1][4:6] , file.split('/')[1][6:8]
+        # print (f'{year=} {month=} {day=}')
+        try:
+            datetime.strptime(month + '/' +day + '/' + year , '%m/%d/%Y')
+        except ValueError:
+            print(file)
+            continue
+        name = file.split('/')[1]
+        # print(file)
+        df = pandas.read_csv(file)
+    print(df)
 
 if __name__ == "__main__":
     main()
