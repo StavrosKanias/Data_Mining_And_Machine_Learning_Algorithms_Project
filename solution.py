@@ -20,7 +20,6 @@ def main():
         except ValueError:
             continue
 
-        name = file.split(osSlash)[1]
         # Read csv
         df = pandas.read_csv(file)
         mean = dayMeanValue(df)
