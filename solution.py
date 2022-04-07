@@ -3,7 +3,8 @@ import glob
 
 
 def main():
-    pass
+    demand = glob.glob("demand/*.csv")
+    print(demand)
 
 
 if __name__ == "__main__":
