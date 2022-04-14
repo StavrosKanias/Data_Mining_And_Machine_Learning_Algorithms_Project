@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 def main():
     demands = glob.glob("demand/*.csv")
-    sources = glob.glob("source/*.csv")
+    sources = glob.glob("sources/*.csv")
     sources.sort()
     demands.sort()
     osSlash = demands[0][6]
