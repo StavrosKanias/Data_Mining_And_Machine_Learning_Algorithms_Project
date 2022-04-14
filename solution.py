@@ -30,10 +30,11 @@ def main():
         days.append(date)
         means.append(mean)
     ourDf = pandas.DataFrame({"Day": days, "Mean": means})
-    plotdf(ourDf)
+
+    plotdf(ourDf, "Monthly demand")
 
 
-def plotdf(df):
+def plotdf(df, title):
     days = []
     means = []
     total = []
@@ -49,6 +50,7 @@ def plotdf(df):
             cnt += 1
             prevyear = year
             plt.subplot(3, 1, cnt)
+            plt.title(title, " for the year ", (int(prevyear) - 1))
             plt.plot_date(days, means, "b-", xdate=True)
             plt.plot_date(days, means, "r.", xdate=True)
             total.append((list(days), list(means)))
@@ -57,6 +59,7 @@ def plotdf(df):
             days.append(day)
             means.append(mean)
     plt.subplot(3, 1, 3)
+    plt.title(title, " for the year ", (int(prevyear) - 1))
     plt.plot_date(days, means, "b-", xdate=True)
     plt.plot_date(days, means, "r.", xdate=True)
     plt.show()
