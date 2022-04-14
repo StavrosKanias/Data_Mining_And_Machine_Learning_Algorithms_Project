@@ -14,6 +14,7 @@ def main():
     days = []
     means = []
     expectedMeans = []
+    energy = []
     for demand, source in zip(demands, sources):
         year, month, day = demand.split(osSlash)[1][:4], demand.split(osSlash)[
             1][4:6], demand.split(osSlash)[1][6:8]
@@ -26,64 +27,82 @@ def main():
 
         # Read csv
         dfDemand = pandas.read_csv(demand)
-        # dfSource = pandas.read_csv(source)
+        dfSource = pandas.read_csv(source)
+        energy.append(dayMeanSource(dfSource))
         mean = dayMeanDemand(dfDemand, "Current demand")
         expectedMean = dayMeanDemand(dfDemand, "Day ahead forecast")
         days.append(date)
         means.append(mean)
         expectedMeans.append(expectedMean)
-    demandDf = pandas.DataFrame({"Day": days, "Mean": means})
-    expectedDemandDf = pandas.DataFrame(
-        {"Day": days[1:], "Mean": expectedMeans[:-1]})
-
-    plotdf(demandDf, expectedDemandDf, "Monthly demand", 0)
+    # Επειδή δεν έχουμε τιμή για την πρώτη μέρα βάζουμε την ίδια
+    expectedMeans.insert(0, means[0])
+    demandDf = pandas.DataFrame(
+        {"Day": days, "Mean": means, "Day ahead forecast": expectedMeans[:-1], "Source": energy})
+    plotdf(demandDf, "Monthly demand", 0)
     plt.show()
 
 
-def plotdf(demandDf, expectedDemandDf, title, figure):
+def plotdf(demandDf, title, figure):
     days = []
     means = []
     total = []
     expectedDemand = []
-    expectedDay = []
+    energy = []
     prevyear = '2019'
     plt.figure(figure)
     cnt = 0
-    for day, mean, expDay, expected in zip(demandDf["Day"], demandDf["Mean"], expectedDemandDf["Day"], expectedDemandDf["Mean"]):
+    for day, mean, expected, produced in zip(demandDf["Day"], demandDf["Mean"], demandDf["Day ahead forecast"], demandDf["Source"]):
         year = str(day)[:4]
         if prevyear == year:
             days.append(day)
             means.append(mean)
-            expectedDay.append(expDay)
             expectedDemand.append(expected)
+            energy.append(produced)
         else:
             cnt += 1
             prevyear = year
             plt.subplot(3, 1, cnt)
             plt.title(f"{title} for the year {(int(prevyear) - 1)}")
             # plt.plot_date(days, means, "b-", xdate=True)
-            plt.plot_date(days, means, "rx", xdate=True)
-            plt.plot_date(expectedDay, expectedDemand, "b.", xdate=True)
-            firstDay = expectedDay[-1]
-            firstDemand = expectedDemand[-1]
+            plt.plot_date(days, means, "r-", xdate=True)
+            plt.plot_date(days, expectedDemand, "b-", xdate=True)
+            plt.plot_date(days, energy, "y-", xdate=True)
+            plt.plot_date(days, energy, "y.", xdate=True, markersize=3)
+            plt.plot_date(days, means, "r.", xdate=True, markersize=3)
+            plt.plot_date(days, expectedDemand, "b.",
+                          xdate=True, markersize=3)
+            plt.legend(("Day Mean", "Day Predicted", "Energy Produced"))
             total.append((list(days), list(means)))
             days.clear()
             means.clear()
+            energy.clear()
             expectedDemand.clear()
-            expectedDay.clear()
-            expectedDemand.extend((firstDemand, expected))
-            expectedDay.extend((firstDay, expDay))
+            energy.append(produced)
+            expectedDemand.append(expected)
             days.append(day)
             means.append(mean)
     plt.subplot(3, 1, 3)
     plt.title(f"{title} for the year {(int(prevyear))}")
-    plt.plot_date(expectedDay, expectedDemand, "rx", xdate=True)
-    plt.plot_date(days, means, "b.", xdate=True)
+    plt.plot_date(days, means, "r-", xdate=True)
+    plt.plot_date(days, expectedDemand, "b-", xdate=True)
+    plt.plot_date(days, energy, "y-", xdate=True)
+    plt.plot_date(days, energy, "y.", xdate=True, markersize=3)
+    plt.plot_date(days, means, "r.", xdate=True, markersize=3)
+    plt.plot_date(days, expectedDemand, "b.", xdate=True, markersize=3)
+    plt.legend(("Day Mean", "Day Predicted", "Energy Produced"))
 
 
 def dayMeanSource(df):
     keys = list(df.columns.values)
-    base = len(df[keys[-1]])
+    keys.remove("Time")
+    totalEnergy = 0
+    base = len(df[keys[0]])
+    for key in keys:
+        for value in df[key]:
+            if math.isnan(value):
+                continue
+            totalEnergy += value
+    return totalEnergy / base
 
 
 def dayMeanDemand(df, column):
