@@ -34,7 +34,7 @@ def main():
         expectedMeans.append(expectedMean)
     demandDf = pandas.DataFrame({"Day": days, "Mean": means})
     expectedDemandDf = pandas.DataFrame(
-        {"Day": days, "Mean": expectedMeans})
+        {"Day": days[1:], "Mean": expectedMeans[:-1]})
 
     plotdf(demandDf, expectedDemandDf, "Monthly demand", 0)
     plt.show()
@@ -45,14 +45,16 @@ def plotdf(demandDf, expectedDemandDf, title, figure):
     means = []
     total = []
     expectedDemand = []
+    expectedDay = []
     prevyear = '2019'
     plt.figure(figure)
     cnt = 0
-    for day, mean, expected in zip(demandDf["Day"], demandDf["Mean"], expectedDemandDf["Mean"]):
+    for day, mean, expDay, expected in zip(demandDf["Day"], demandDf["Mean"], expectedDemandDf["Day"], expectedDemandDf["Mean"]):
         year = str(day)[:4]
         if prevyear == year:
             days.append(day)
             means.append(mean)
+            expectedDay.append(expDay)
             expectedDemand.append(expected)
         else:
             cnt += 1
@@ -61,22 +63,21 @@ def plotdf(demandDf, expectedDemandDf, title, figure):
             plt.title(f"{title} for the year {(int(prevyear) - 1)}")
             # plt.plot_date(days, means, "b-", xdate=True)
             plt.plot_date(days, means, "rx", xdate=True)
-            ###
-            temp = expectedDemand.pop(-1)
-            ###
-            plt.plot_date(days[1 if cnt == 1 else 0:],
-                          expectedDemand, "b.", xdate=True)
-
+            plt.plot_date(expectedDay, expectedDemand, "b.", xdate=True)
+            firstDay = expectedDay[-1]
+            firstDemand = expectedDemand[-1]
             total.append((list(days), list(means)))
             days.clear()
             means.clear()
             expectedDemand.clear()
-            expectedDemand.extend((temp, expected))
+            expectedDay.clear()
+            expectedDemand.extend((firstDemand, expected))
+            expectedDay.extend((firstDay, expDay))
             days.append(day)
             means.append(mean)
     plt.subplot(3, 1, 3)
     plt.title(f"{title} for the year {(int(prevyear))}")
-    plt.plot_date(days, expectedDemand[:-1], "rx", xdate=True)
+    plt.plot_date(expectedDay, expectedDemand, "rx", xdate=True)
     plt.plot_date(days, means, "b.", xdate=True)
 
 
