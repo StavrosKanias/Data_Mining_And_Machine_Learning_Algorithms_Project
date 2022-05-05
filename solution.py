@@ -4,8 +4,11 @@ from datetime import datetime
 import math
 import matplotlib.pyplot as plt
 
+osSlash = "/"
+
 
 def main():
+    global osSlash
     demands = glob.glob("demand/*.csv")
     sources = glob.glob("sources/*.csv")
     sources.sort()
@@ -38,8 +41,42 @@ def main():
     expectedMeans.insert(0, means[0])
     demandDf = pandas.DataFrame(
         {"Day": days, "Mean": means, "Day ahead forecast": expectedMeans[:-1], "Source": energy})
+    showRandomDays()
     plotdf(demandDf, "Monthly demand", 0)
     plt.show()
+
+
+def categorizeEnergy(df):
+    time = pandas.DataFrame(df[["Time"]])
+    renewable = pandas.DataFrame(df[["Solar", "Wind"]])
+    nonRenewable = pandas.DataFrame(df[df.columns[3:]])
+    return time, renewable, nonRenewable
+
+
+def showRandomDays():
+    global osSlash
+    dates = ("20190501", "20200914", "20211212", "20200906")
+    for id, date in enumerate(dates):
+        plt.figure(id+1)
+        curdemand = "demand"+osSlash+date+".csv"
+        cursource = "sources"+osSlash+date+".csv"
+        dfDemand = pandas.read_csv(curdemand)
+        dfSource = pandas.read_csv(cursource)
+        duck_curve(dfDemand, dfSource, date)
+
+
+def duck_curve(dfDemand, dfSource, day):
+    time, renewable, nonRenewable = categorizeEnergy(dfSource)
+    renewable["SUM"] = renewable.sum(axis=1)
+    nonRenewable["SUM"] = nonRenewable.sum(axis=1)
+    currentDemand = pandas.DataFrame(dfDemand[["Current demand"]][:-1])
+    plt.title(day)
+    plt.plot(time["Time"], currentDemand["Current demand"],
+             label="Current Demand")
+    plt.plot(time["Time"], renewable["SUM"], label="Non-Dispatchable")
+    plt.plot(time["Time"], nonRenewable["SUM"], label="Dispatchable")
+    plt.grid()
+    plt.legend()
 
 
 def plotdf(demandDf, title, figure):
