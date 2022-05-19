@@ -49,8 +49,9 @@ def plot_sillhouete_clusers():
         cluster_found = kmeans.fit_predict(X)
         sillhoute_scores.append(silhouette_score(X, kmeans.labels_))
 
-    # plt.plot(silhouette_score)
-    # plt.show()
+    plt.figure(0)
+    plt.plot(sillhoute_scores)
+
     kmeans = KMeans(n_clusters=3)
     cluster_found = kmeans.fit_predict(X)
     cluster_found_sr = pd.Series(cluster_found, name='cluster')
