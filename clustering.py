@@ -7,9 +7,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors
 
-sillhoute_scores = []
-n_cluster_list = np.arange(2, 31).astype(int)
-
 
 def create_pivot():
     df = pd.read_csv("summedUp.csv")
@@ -34,8 +31,9 @@ def create_pivot():
     return df_uci_pivot
 
 
-def plot_sillhouete_clusers():
-
+def cluster_KMeans():
+    sillhoute_scores = []
+    n_cluster_list = np.arange(2, 31).astype(int)
     df_uci_pivot = create_pivot()
     X = df_uci_pivot.copy()
 
@@ -56,11 +54,15 @@ def plot_sillhouete_clusers():
     cluster_found = kmeans.fit_predict(X)
     cluster_found_sr = pd.Series(cluster_found, name='cluster')
     df_uci_pivot = df_uci_pivot.set_index(cluster_found_sr, append=True)
-
-    fig, ax = plt.subplots(1, 1, figsize=(18, 10))
-    color_list = ['blue', 'red', 'green']
     cluster_values = sorted(
         df_uci_pivot.index.get_level_values('cluster').unique())
+
+    return X, cluster_values, df_uci_pivot
+
+
+def plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot):
+
+    fig, ax = plt.subplots(1, 1, figsize=(18, 10))
 
     for cluster, color in zip(cluster_values, color_list):
         df_uci_pivot.xs(cluster, level=1).T.plot(
@@ -72,8 +74,6 @@ def plot_sillhouete_clusers():
     ax.set_xticks(np.arange(1, 25))
     ax.set_ylabel('kilowatts')
     ax.set_xlabel('hour')
-
-    return X, cluster_values, color_list, df_uci_pivot
 
 
 def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
@@ -90,7 +90,9 @@ def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
                 )
 
 
-X, cluster_values, color_list, df_uci_pivot = plot_sillhouete_clusers()
+color_list = ['blue', 'red', 'green']
+X, cluster_values, df_uci_pivot = cluster_KMeans()
+plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
 plt.figure(2)
 plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)
 plt.show()
