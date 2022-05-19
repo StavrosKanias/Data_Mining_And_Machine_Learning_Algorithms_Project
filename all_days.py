@@ -51,7 +51,7 @@ else:
 
 print(df)
 
-df = df.astype(np.float).fillna(method='bfill')
+df = df.astype(np.float64).fillna(method='bfill')
 
 # For simplication,
 # I will resample so that each row
@@ -63,7 +63,7 @@ df_uci_hourly.index = df_uci_hourly.index.date
 print(df_uci_hourly)
 
 df_uci_pivot = df_uci_hourly.pivot(columns='hour')
-df_uci_pivot = df_uci_pivot.dropna()
+# df_uci_pivot = df_uci_pivot.dropna()
 
 print(df_uci_pivot)
 df_uci_pivot.T.plot(figsize=(13, 8), legend=False, color='blue', alpha=0.02)

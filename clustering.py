@@ -16,7 +16,7 @@ def create_pivot():
 
     print(df)
 
-    df = df.astype(np.float).fillna(method='bfill')
+    df = df.astype(np.float64).fillna(method='bfill')
 
     # For simplication,
     # I will resample so that each row
