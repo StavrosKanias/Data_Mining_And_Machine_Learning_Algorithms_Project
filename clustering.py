@@ -44,14 +44,13 @@ for n_cluster in n_cluster_list:
     kmeans = KMeans(n_clusters=n_cluster)
     cluster_found = kmeans.fit_predict(X)
     sillhoute_scores.append(silhouette_score(X, kmeans.labels_))
+plt.figure(0)
+plt.plot(n_cluster_list, sillhoute_scores)
 
-# plt.plot(silhouette_score)
-# plt.show()
 kmeans = KMeans(n_clusters=3)
 cluster_found = kmeans.fit_predict(X)
 cluster_found_sr = pd.Series(cluster_found, name='cluster')
 df_uci_pivot = df_uci_pivot.set_index(cluster_found_sr, append=True)
-
 fig, ax = plt.subplots(1, 1, figsize=(18, 10))
 color_list = ['blue', 'red', 'green']
 cluster_values = sorted(
