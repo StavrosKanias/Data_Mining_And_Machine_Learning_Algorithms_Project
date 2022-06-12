@@ -7,6 +7,7 @@ from sklearn.neighbors import NearestNeighbors
 from collections import Counter
 import seaborn as sns
 import numpy as np
+from sklearn import metrics
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors
@@ -97,33 +98,69 @@ def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
 
 def our_dbscan():
     X = create_pivot()
-    tsne = TSNE()
+    tsne = TSNE(random_state=1)
     X = tsne.fit_transform(X)
 
-    nbrs = NearestNeighbors(n_neighbors=5).fit(X)
+    nbrs = NearestNeighbors(n_neighbors=10).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
 
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
     k_dist = sort_neight_dist[:, 4]
-    plt.figure(3)
+    plt.figure(0)
     plt.plot(k_dist)
-    plt.axhline(y=2.5, linewidth=1, linestyle='dashed', color='k')
+    plt.axhline(y=2.8, linewidth=1, linestyle='dashed', color='k')
+
+    db = DBSCAN(eps=2.8, min_samples=10).fit(X)
+    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+    labels = db.labels_
+
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    n_noise_ = list(labels).count(-1)
+
+    print("Estimated number of clusters: %d" % n_clusters_)
+    print("Estimated number of noise points: %d" % n_noise_)
+    print("Silhouette Coefficient: %0.3f" %
+          metrics.silhouette_score(X, labels))
+    unique_labels = set(labels)
+    plt.figure(1)
+    colors = [plt.cm.Spectral(each)
+              for each in np.linspace(0, 1, len(unique_labels))]
+    for k, col in zip(unique_labels, colors):
+        if k == -1:
+            # Black used for noise.
+            col = [0, 0, 0, 1]
+
+        class_member_mask = labels == k
+
+        xy = X[class_member_mask & core_samples_mask]
+        plt.plot(
+            xy[:, 0],
+            xy[:, 1],
+            "o",
+            markerfacecolor=tuple(col),
+            markeredgecolor="k",
+            markersize=14,
+        )
+
+        xy = X[class_member_mask & ~core_samples_mask]
+        plt.plot(
+            xy[:, 0],
+            xy[:, 1],
+            "o",
+            markerfacecolor=tuple(col),
+            markeredgecolor="k",
+            markersize=6,
+            label=k
+        )
+
+    plt.title("Estimated number of clusters: %d" % n_clusters_)
+    plt.legend()
     plt.show()
 
-    clusters = DBSCAN(eps=2.5, min_samples=5).fit(X)
-    labels = clusters.labels_
-    print('Unique clusters:')
-    print(set(clusters.labels_))
-    print('Cluster sizes:')
-    print(Counter(clusters.labels_))
-
-    # p = sns.scatterplot(data=X, palette='deep')
-    # sns.move_legend(p,   'upper right', title='Clusters')
-    plt.scatter(X[:, 0], X[:, 1], c=labels, cmap="plasma")
-    plt.legend(labels=labels)
-    plt.show()
     return X
 
 
