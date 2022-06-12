@@ -2,6 +2,10 @@ from sklearn.cluster import KMeans
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import silhouette_score
+from sklearn.cluster import DBSCAN
+from sklearn.neighbors import NearestNeighbors
+from collections import Counter
+import seaborn as sns
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -88,11 +92,43 @@ def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
                 cmap=cmap,
                 alpha=0.6,
                 )
+    return results_tsne
+
+
+def our_dbscan(X):
+
+    tsne = TSNE()
+    X = tsne.fit_transform(X)
+
+    nbrs = NearestNeighbors(n_neighbors=5).fit(X)
+
+    neist_dist, neist_ind = nbrs.kneighbors(X)
+
+    sort_neight_dist = np.sort(neist_dist, axis=0)
+
+    k_dist = sort_neight_dist[:, 4]
+    plt.figure(3)
+    plt.plot(k_dist)
+    plt.axhline(y=2.5, linewidth=1, linestyle='dashed', color='k')
+    plt.show()
+
+    clusters = DBSCAN(eps=2.5, min_samples=5).fit(X)
+    print('Unique clusters:')
+    print(set(clusters.labels_))
+    print('Cluster sizes:')
+    print(Counter(clusters.labels_))
+
+    p = sns.scatterplot(data=X, palette='deep')
+    sns.move_legend(p,   'upper right', bbox_to_anchor=(
+        1.17, 1.2), title='Clusters')
+    plt.show()
+    return X
 
 
 color_list = ['blue', 'red', 'green']
 X, cluster_values, df_uci_pivot = cluster_KMeans()
-plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
-plt.figure(2)
-plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)
-plt.show()
+x = our_dbscan(df_uci_pivot)
+# plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
+# plt.figure(2)
+# plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)
+# plt.show()
