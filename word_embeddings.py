@@ -23,6 +23,9 @@ from tensorflow.keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import train_test_split
 
+MAX_LEN = 150
+MAX_WORDS = 700
+
 
 def process(text):
     lemmatizer = WordNetLemmatizer()
@@ -56,15 +59,27 @@ def train_model(df):
 
     # Tokenizer
 
-    max_words = 700
-    max_len = 150
-
-    tok = Tokenizer(num_words=max_words)
+    tok = Tokenizer(num_words=MAX_WORDS)
     tok.fit_on_texts(X_Train)
     sequences = tok.texts_to_sequences(X_Train)
-    sequences_matrix = pad_sequences(sequences, maxlen=max_len)
+    sequences_matrix = pad_sequences(sequences, maxlen=MAX_LEN)
 
-    return sequences_matrix
+    return sequences_matrix, Y_Train
+
+
+def RNN():
+
+    inputs = Input(name='Input_LAYER', shape=[MAX_LEN])
+    layer = Embedding(MAX_WORDS, MAX_LEN, input_length=(
+        MAX_LEN, MAX_WORDS), trainable=False, name='embedding')(inputs)
+    layer = LSTM(64)(layer)
+    layer = Dense(256, name='dense1')(layer)
+    layer = Activation('relu')(layer)
+    layer = Dropout(0.5)(layer)
+    layer = Dense(1, name='output')(layer)
+    layer = Dense(1, activation='sigmoid', name='predictions')(layer)
+    model = Model(inputs=inputs, outputs=layer)
+    return model
 
 
 if __name__ == "__main__":
