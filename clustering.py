@@ -95,8 +95,8 @@ def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
     return results_tsne
 
 
-def our_dbscan(X):
-
+def our_dbscan():
+    X = create_pivot()
     tsne = TSNE()
     X = tsne.fit_transform(X)
 
@@ -119,15 +119,14 @@ def our_dbscan(X):
     print(Counter(clusters.labels_))
 
     p = sns.scatterplot(data=X, palette='deep')
-    sns.move_legend(p,   'upper right', bbox_to_anchor=(
-        1.17, 1.2), title='Clusters')
+    sns.move_legend(p,   'upper right', title='Clusters')
     plt.show()
     return X
 
 
 color_list = ['blue', 'red', 'green']
-X, cluster_values, df_uci_pivot = cluster_KMeans()
-x = our_dbscan(df_uci_pivot)
+# X, cluster_values, df_uci_pivot = cluster_KMeans()
+x = our_dbscan()
 # plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
 # plt.figure(2)
 # plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)
