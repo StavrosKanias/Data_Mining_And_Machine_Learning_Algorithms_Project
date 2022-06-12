@@ -113,13 +113,16 @@ def our_dbscan():
     plt.show()
 
     clusters = DBSCAN(eps=2.5, min_samples=5).fit(X)
+    labels = clusters.labels_
     print('Unique clusters:')
     print(set(clusters.labels_))
     print('Cluster sizes:')
     print(Counter(clusters.labels_))
 
-    p = sns.scatterplot(data=X, palette='deep')
-    sns.move_legend(p,   'upper right', title='Clusters')
+    # p = sns.scatterplot(data=X, palette='deep')
+    # sns.move_legend(p,   'upper right', title='Clusters')
+    plt.scatter(X[:, 0], X[:, 1], c=labels, cmap="plasma")
+    plt.legend(labels=labels)
     plt.show()
     return X
 
