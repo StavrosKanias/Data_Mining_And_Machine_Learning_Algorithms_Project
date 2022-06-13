@@ -13,6 +13,38 @@ import matplotlib.pyplot as plt
 import matplotlib.colors
 
 
+def tuneParams(X):
+
+    # Defining the list of hyperparameters to try
+    eps_list = np.arange(start=0.1, stop=10.0, step=0.1)
+    min_sample_list = np.arange(start=2, stop=20, step=1)
+
+    # Creating empty data frame to store the silhouette scores for each trials
+    silhouette_scores_data = pd.DataFrame()
+
+    for eps_trial in eps_list:
+        for min_sample_trial in min_sample_list:
+
+            # Generating DBSAN clusters
+            db = DBSCAN(eps=eps_trial, min_samples=min_sample_trial)
+
+            if(len(np.unique(db.fit_predict(X))) > 1):
+                sil_score = silhouette_score(X, db.fit_predict(X))
+            else:
+                continue
+            trial_parameters = (eps_trial.round(2), min_sample_trial)
+
+            silhouette_scores_data = pd.concat([silhouette_scores_data, pd.DataFrame(
+                data=[[sil_score, trial_parameters]], columns=["score", "parameters"])])
+
+    # Finding out the best hyperparameters with highest Score
+    tunedParams = silhouette_scores_data.sort_values(
+        by='score', ascending=False)['parameters'].iloc[0]
+    tuned_eps = tunedParams[0]
+    tuned_min_samples = tunedParams[1]
+    return tuned_eps, tuned_min_samples
+
+
 def create_pivot():
     df = pd.read_csv("summedUp.csv")
     df['datetime'] = pd.to_datetime(df['datetime'])
@@ -100,19 +132,19 @@ def our_dbscan():
     X = create_pivot()
     tsne = TSNE(random_state=1)
     X = tsne.fit_transform(X)
-
-    nbrs = NearestNeighbors(n_neighbors=10).fit(X)
+    eps, min_samples = tuneParams(X)
+    nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
 
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
-    k_dist = sort_neight_dist[:, 4]
+    k_dist = sort_neight_dist[:, 10]
     plt.figure(0)
     plt.plot(k_dist)
-    plt.axhline(y=2.8, linewidth=1, linestyle='dashed', color='k')
+    plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
 
-    db = DBSCAN(eps=2.8, min_samples=10).fit(X)
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
