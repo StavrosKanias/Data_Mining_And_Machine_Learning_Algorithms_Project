@@ -64,7 +64,8 @@ def unifyData():
                 currentDemand = pd.read_csv(
                     demand[i], usecols=['Time', 'Current demand'])
 
-                currentSupply = pd.read_csv(supply[i]).drop(["Time"], axis=1)
+                currentSupply = pd.read_csv(
+                    supply[i]).drop(labels=["Time"], axis=1)
                 currentSupply = currentSupply.replace(
                     '', np.nan).astype(np.float64).fillna(value=0.0)
                 unified = pd.DataFrame(

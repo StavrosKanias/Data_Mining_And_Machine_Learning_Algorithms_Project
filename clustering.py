@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 def tuneParams(X):
 
     # Defining the list of hyperparameters to try
-    eps_list = np.arange(start=400, stop=450, step=1)
+    eps_list = np.arange(start=550, stop=650, step=1)
     min_sample_list = np.arange(start=2, stop=20, step=1)
 
     # Creating empty data frame to store the silhouette scores for each trials
@@ -66,7 +66,6 @@ def create_dataset():
 
 
 def our_dbscan(X, title):
-    # print(X)
     newX = X['Demand'].values
     newY = X['Supply'].values
     print(newX)
@@ -77,8 +76,6 @@ def our_dbscan(X, title):
     print(X)
     X = np.array(temp)
     print(X)
-    # tsne = TSNE(random_state=1)
-    # X = tsne.fit_transform(X)
     eps, min_samples, silhouette_score = tuneParams(X)
     nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
 
@@ -86,7 +83,7 @@ def our_dbscan(X, title):
 
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
-    k_dist = sort_neight_dist[:, 1]
+    k_dist = sort_neight_dist[:, 3]
     plt.figure()
     plt.plot(k_dist)
     plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
@@ -152,4 +149,4 @@ for i, label in enumerate(db.labels_):
     if label == -1:
         outIndex.append(i)
 for i in outIndex:
-    print(df.iloc[i])
+    print(i)

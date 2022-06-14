@@ -12,58 +12,13 @@ np.random.seed(7)
 
 outliers = [
     "2019-01-02",
-    "2019-03-10",
-    "2019-03-13",
     "2019-03-26",
-    "2019-05-27",
-    "2019-06-11",
-    "2019-07-23",
-    "2019-07-24",
-    "2019-07-25",
-    "2019-07-26",
-    "2019-08-14",
-    "2019-08-15",
-    "2019-08-26",
-    "2019-08-27",
-    "2019-09-03",
-    "2019-09-04",
-    "2019-09-05",
-    "2019-09-06",
-    "2020-03-29",
-    "2020-04-11",
-    "2020-04-12",
-    "2020-04-19",
-    "2020-08-13",
     "2020-08-14",
     "2020-08-15",
-    "2020-08-16",
     "2020-08-17",
     "2020-08-18",
     "2020-08-19",
-    "2020-08-20",
-    "2020-08-21",
-    "2020-08-22",
-    "2020-08-24",
-    "2020-08-25",
-    "2020-09-05",
-    "2020-09-06",
-    "2020-09-07",
-    "2021-06-18",
-    "2021-07-09",
-    "2021-07-19",
-    "2021-07-20",
-    "2021-07-21",
-    "2021-07-29",
-    "2021-08-11",
-    "2021-08-12",
-    "2021-08-16",
-    "2021-09-08",
-    "2021-09-09",
-    "2021-12-14",
-    "2021-12-24",
-    "2021-12-25",
-    "2021-12-26",
-    "2021-12-30"
+    "2020-09-06"
 ]
 
 
@@ -82,18 +37,17 @@ def create_dataset(dataset, look_back=1):
 def read_dataset():
     df_demand = pd.read_csv("unified.csv")
     df_sources = pd.read_csv("summedSources.csv")
-    df_demand.drop('Supply', axis=1)
-    df_demand.drop('Datetime', axis=1)
+    df_demand.drop('Supply', axis=1, inplace=True)
+    df_demand.drop('Datetime', axis=1, inplace=True)
     df = df_sources.join(df_demand)
     df['Demand-Renewable'] = df['Demand'] - df['Renewable']
-    # df = df.iloc[:110000, :]
     df = df.dropna()
 
     for i in outliers:
         curIndex = df.loc[df['datetime'] == f'{i} 00:00:00'].index
         print(curIndex)
         for j in range(288):
-            df.drop(curIndex + j)
+            df.drop(index=(curIndex + j), axis=0, inplace=True)
     return df
 
 
