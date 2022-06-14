@@ -10,13 +10,12 @@ import numpy as np
 from sklearn import metrics
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.colors
 
 
 def tuneParams(X):
 
     # Defining the list of hyperparameters to try
-    eps_list = np.arange(start=0.1, stop=6.0, step=0.1)
+    eps_list = np.arange(start=400, stop=450, step=1)
     min_sample_list = np.arange(start=2, stop=20, step=1)
 
     # Creating empty data frame to store the silhouette scores for each trials
@@ -60,15 +59,14 @@ def create_dataset():
     # For simplication,
     # I will resample so that each row
     # represents a whole hour
-    df_uci_daily = df.resample('d').sum()
+    df_uci_daily = df.resample('d').mean()
     df_uci_daily['day'] = df_uci_daily.index.day
     df_uci_daily.index = df_uci_daily.index.date
-    df_uci_daily.drop(['day'], axis=1, inplace=True)
     return df_uci_daily
 
 
 def our_dbscan(X, title):
-    print(X)
+    # print(X)
     newX = X['Demand'].values
     newY = X['Supply'].values
     print(newX)
@@ -81,21 +79,20 @@ def our_dbscan(X, title):
     print(X)
     # tsne = TSNE(random_state=1)
     # X = tsne.fit_transform(X)
-    # print(X[0][0])
-    # eps, min_samples, silhouette_score = tuneParams(X)
-    nbrs = NearestNeighbors(n_neighbors=15).fit(X)
+    eps, min_samples, silhouette_score = tuneParams(X)
+    nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
 
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
-    k_dist = sort_neight_dist[:, 10]
+    k_dist = sort_neight_dist[:, 1]
     plt.figure()
     plt.plot(k_dist)
-    plt.axhline(y=(0.25 * 10**6), linewidth=1, linestyle='dashed', color='k')
+    plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
     plt.savefig('Optimal eps for ' + title + '.png')
 
-    db = DBSCAN(eps=(0.25 * 10**6), min_samples=15).fit(X)
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
@@ -106,7 +103,7 @@ def our_dbscan(X, title):
 
     print("Estimated number of clusters: %d" % n_clusters_)
     print("Estimated number of noise points: %d" % n_noise_)
-    # print("Silhouette Coefficient: %0.3f" % silhouette_score)
+    print("Silhouette Coefficient: %0.3f" % silhouette_score)
     unique_labels = set(labels)
     plt.figure()
     colors = [plt.cm.Spectral(each)
