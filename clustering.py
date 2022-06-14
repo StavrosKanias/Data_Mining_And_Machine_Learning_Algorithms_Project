@@ -28,7 +28,8 @@ def tuneParams(X):
             # Generating DBSAN clusters
             db = DBSCAN(eps=eps_trial, min_samples=min_sample_trial)
 
-            if(len(np.unique(db.fit_predict(X))) > 1):
+            if(len(np.unique(db.fit_predict(X)))
+               > 1):
                 sil_score = silhouette_score(X, db.fit_predict(X))
             else:
                 continue
@@ -67,10 +68,22 @@ def create_dataset():
 
 
 def our_dbscan(X, title):
-    tsne = TSNE(random_state=1)
-    X = tsne.fit_transform(X)
-    eps, min_samples, silhouette_score = tuneParams(X)
-    nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
+    print(X)
+    newX = X['Demand'].values
+    newY = X['Supply'].values
+    print(newX)
+    print(newY)
+    temp = []
+    for x, y in zip(newX, newY):
+        temp.append([x, y])
+    print(X)
+    X = np.array(temp)
+    print(X)
+    # tsne = TSNE(random_state=1)
+    # X = tsne.fit_transform(X)
+    # print(X[0][0])
+    # eps, min_samples, silhouette_score = tuneParams(X)
+    nbrs = NearestNeighbors(n_neighbors=15).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
 
@@ -79,10 +92,10 @@ def our_dbscan(X, title):
     k_dist = sort_neight_dist[:, 10]
     plt.figure()
     plt.plot(k_dist)
-    plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
+    plt.axhline(y=(0.25 * 10**6), linewidth=1, linestyle='dashed', color='k')
     plt.savefig('Optimal eps for ' + title + '.png')
 
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+    db = DBSCAN(eps=(0.25 * 10**6), min_samples=15).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
@@ -93,7 +106,7 @@ def our_dbscan(X, title):
 
     print("Estimated number of clusters: %d" % n_clusters_)
     print("Estimated number of noise points: %d" % n_noise_)
-    print("Silhouette Coefficient: %0.3f" % silhouette_score)
+    # print("Silhouette Coefficient: %0.3f" % silhouette_score)
     unique_labels = set(labels)
     plt.figure()
     colors = [plt.cm.Spectral(each)
