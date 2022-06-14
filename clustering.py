@@ -48,13 +48,13 @@ def tuneParams(X):
     return tuned_eps, tuned_min_samples, bestScore
 
 
-def create_pivot():
+def create_dataset():
     df = pd.read_csv("unified.csv")
     df['Datetime'] = pd.to_datetime(df['Datetime'])
     df = df.set_index('Datetime')
     df = df.astype(np.float64).fillna(method='bfill')
 
-    print(df)
+    # print(df)
 
     # For simplication,
     # I will resample so that each row
@@ -62,85 +62,19 @@ def create_pivot():
     df_uci_hourly = df.resample('H').sum()
     df_uci_hourly['Hour'] = df_uci_hourly.index.hour
     df_uci_hourly.index = df_uci_hourly.index.date
-
-    print(df_uci_hourly)
-
-    demand_pivot = df_uci_hourly.pivot(columns='Hour', values='Demand')
-    demand_pivot = demand_pivot.dropna()
-    supply_pivot = df_uci_hourly.pivot(columns='Hour', values='Supply')
-    supply_pivot = supply_pivot.dropna()
-
-    return demand_pivot, supply_pivot
-
-
-def cluster_KMeans():
-    sillhoute_scores = []
-    n_cluster_list = np.arange(2, 31).astype(int)
-    df_uci_pivot = create_pivot()
-    X = df_uci_pivot.copy()
-
-    # Very important to scale!
-    sc = MinMaxScaler()
-    X = sc.fit_transform(X)
-
-    for n_cluster in n_cluster_list:
-
-        kmeans = KMeans(n_clusters=n_cluster)
-        cluster_found = kmeans.fit_predict(X)
-        sillhoute_scores.append(silhouette_score(X, kmeans.labels_))
-
-    plt.figure(0)
-    plt.plot(sillhoute_scores)
-
-    kmeans = KMeans(n_clusters=3)
-    cluster_found = kmeans.fit_predict(X)
-    cluster_found_sr = pd.Series(cluster_found, name='cluster')
-    df_uci_pivot = df_uci_pivot.set_index(cluster_found_sr, append=True)
-    cluster_values = sorted(
-        df_uci_pivot.index.get_level_values('cluster').unique())
-
-    return X, cluster_values, df_uci_pivot
-
-
-def plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot):
-
-    fig, ax = plt.subplots(1, 1, figsize=(18, 10))
-
-    for cluster, color in zip(cluster_values, color_list):
-        df_uci_pivot.xs(cluster, level=1).T.plot(
-            ax=ax, legend=False, alpha=0.01, color=color, label=f'Cluster {cluster}'
-        )
-        df_uci_pivot.xs(cluster, level=1).median().plot(
-            ax=ax, color=color, alpha=0.9, ls='--'
-        )
-    ax.set_xticks(np.arange(1, 25))
-    ax.set_ylabel('kilowatts')
-    ax.set_xlabel('hour')
-
-
-def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
-
-    tsne = TSNE()
-    results_tsne = tsne.fit_transform(X)
-
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
-        cluster_values, color_list)
-    plt.scatter(results_tsne[:, 0], results_tsne[:, 1],
-                c=df_uci_pivot.index.get_level_values('cluster'),
-                cmap=cmap,
-                alpha=0.6,
-                )
-    return results_tsne
+    return df_uci_hourly
 
 
 def our_dbscan(X, title):
     tsne = TSNE(random_state=1)
     X = tsne.fit_transform(X)
+    print('1')
     eps, min_samples, silhouette_score = tuneParams(X)
+    print('1')
     nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
-
+    print('1')
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
     k_dist = sort_neight_dist[:, 10]
@@ -148,16 +82,16 @@ def our_dbscan(X, title):
     plt.plot(k_dist)
     plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
     plt.savefig('Optimal eps for ' + title + '.png')
-
+    print('1')
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
-
+    print('1')
     # Number of clusters in labels, ignoring noise if present.
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     n_noise_ = list(labels).count(-1)
-
+    print('1')
     print("Estimated number of clusters: %d" % n_clusters_)
     print("Estimated number of noise points: %d" % n_noise_)
     print("Silhouette Coefficient: %0.3f" % silhouette_score)
@@ -198,15 +132,17 @@ def our_dbscan(X, title):
     plt.savefig('DBscan clusters for ' + title + '.png')
     # plt.show()
 
-    return X
+    return X, db
 
 
 color_list = ['blue', 'red', 'green']
 # X, cluster_values, df_uci_pivot = cluster_KMeans()
-D, S = create_pivot()
+df = create_dataset()
+print(df)
+x, db = our_dbscan(df, 'test3')
 # x = our_dbscan()
-our_dbscan(D, 'demand')
-our_dbscan(S, 'supply')
+# our_dbscan(D, 'demand')
+# our_dbscan(S, 'supply')
 # plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
 # plt.figure(2)
 # plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)
