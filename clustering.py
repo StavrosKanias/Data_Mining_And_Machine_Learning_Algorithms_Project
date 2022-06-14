@@ -16,7 +16,7 @@ import matplotlib.colors
 def tuneParams(X):
 
     # Defining the list of hyperparameters to try
-    eps_list = np.arange(start=0.1, stop=10.0, step=0.1)
+    eps_list = np.arange(start=0.1, stop=6.0, step=0.1)
     min_sample_list = np.arange(start=2, stop=20, step=1)
 
     # Creating empty data frame to store the silhouette scores for each trials
@@ -49,26 +49,28 @@ def tuneParams(X):
 
 
 def create_pivot():
-    df = pd.read_csv("summedUp.csv")
-    df['datetime'] = pd.to_datetime(df['datetime'])
-    df = df.set_index('datetime')
+    df = pd.read_csv("unified.csv")
+    df['Datetime'] = pd.to_datetime(df['Datetime'])
+    df = df.set_index('Datetime')
+    df = df.astype(np.float64).fillna(method='bfill')
 
     print(df)
-
-    df = df.astype(np.float64).fillna(method='bfill')
 
     # For simplication,
     # I will resample so that each row
     # represents a whole hour
     df_uci_hourly = df.resample('H').sum()
-    df_uci_hourly['hour'] = df_uci_hourly.index.hour
+    df_uci_hourly['Hour'] = df_uci_hourly.index.hour
     df_uci_hourly.index = df_uci_hourly.index.date
 
     print(df_uci_hourly)
 
-    df_uci_pivot = df_uci_hourly.pivot(columns='hour')
-    df_uci_pivot = df_uci_pivot.dropna()
-    return df_uci_pivot
+    demand_pivot = df_uci_hourly.pivot(columns='Hour', values='Demand')
+    demand_pivot = demand_pivot.dropna()
+    supply_pivot = df_uci_hourly.pivot(columns='Hour', values='Supply')
+    supply_pivot = supply_pivot.dropna()
+
+    return demand_pivot, supply_pivot
 
 
 def cluster_KMeans():
@@ -131,8 +133,7 @@ def plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot):
     return results_tsne
 
 
-def our_dbscan():
-    X = create_pivot()
+def our_dbscan(X, title):
     tsne = TSNE(random_state=1)
     X = tsne.fit_transform(X)
     eps, min_samples, silhouette_score = tuneParams(X)
@@ -143,9 +144,10 @@ def our_dbscan():
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
     k_dist = sort_neight_dist[:, 10]
-    plt.figure(0)
+    plt.figure()
     plt.plot(k_dist)
     plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
+    plt.savefig('Optimal eps for ' + title + '.png')
 
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -160,7 +162,7 @@ def our_dbscan():
     print("Estimated number of noise points: %d" % n_noise_)
     print("Silhouette Coefficient: %0.3f" % silhouette_score)
     unique_labels = set(labels)
-    plt.figure(1)
+    plt.figure()
     colors = [plt.cm.Spectral(each)
               for each in np.linspace(0, 1, len(unique_labels))]
     for k, col in zip(unique_labels, colors):
@@ -193,14 +195,18 @@ def our_dbscan():
 
     plt.title("Estimated number of clusters: %d" % n_clusters_)
     plt.legend()
-    plt.show()
+    plt.savefig('DBscan clusters for ' + title + '.png')
+    # plt.show()
 
     return X
 
 
 color_list = ['blue', 'red', 'green']
 # X, cluster_values, df_uci_pivot = cluster_KMeans()
-x = our_dbscan()
+D, S = create_pivot()
+# x = our_dbscan()
+our_dbscan(D, 'demand')
+our_dbscan(S, 'supply')
 # plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
 # plt.figure(2)
 # plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)

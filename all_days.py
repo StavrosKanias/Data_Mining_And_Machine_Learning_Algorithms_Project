@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from datetime import datetime
+from csv import reader
 
 
 def hourly(df, column):
@@ -16,55 +17,101 @@ def hourly(df, column):
     return hourlyMean
 
 
-plt.style.use('seaborn')
+def validDate(csv, osSlash):
+    year, month, day = csv.split(osSlash)[1][:4], csv.split(osSlash)[
+        1][4:6], csv.split(osSlash)[1][6:8]
+    # Check if date exists
+    try:
+        date = datetime.strptime(
+            month + '/' + day + '/' + year, '%m/%d/%Y')
+        return year, month, day, True
+    except ValueError:
+        #print('Invalid date: ' + month + '/' + day + '/' + year)
+        return year, month, day, False
 
-data_path = 'demand/*'
-df = pd.DataFrame()
 
-csvs = glob.glob(data_path)
-csvs.sort()
-osSlash = csvs[0][6]
-if len(glob.glob("summedUp.csv")) == 0:
-    for i, csv in enumerate(csvs):
-        print(f"{i+1} out of {len(csvs)} done")
-        year, month, day = csv.split(osSlash)[1][:4], csv.split(osSlash)[
-            1][4:6], csv.split(osSlash)[1][6:8]
-        # Check if day exists
-        try:
-            date = datetime.strptime(
-                month + '/' + day + '/' + year, '%m/%d/%Y')
-        except ValueError:
-            continue
-        df_uci = pd.read_csv(csv, usecols=["Time", 'Current demand'])
-        df_uci['datetime'] = pd.to_datetime(
-            month + '/' + day + '/' + year + ' ' + df_uci['Time'])
-        df_uci = df_uci.drop(["Time"], axis=1)
-        df_uci = df_uci.set_index('datetime')
-        df_uci = df_uci.replace('?', np.nan)
-        # df_uci = df_uci.astype(np.float).fillna(method='bfill')
-        df = pd.concat([df, df_uci])
-    df.to_csv("summedUp.csv")
-else:
-    df = pd.read_csv("summedUp.csv")
-    df['datetime'] = pd.to_datetime(df['datetime'])
-    df = df.set_index('datetime')
+def totalSupply(csv):
+    csv = csv.drop(["Time"], axis=1)
+    csv['Total supply'] = 0
+    for col in csv.columns:
+        if col != 'Total supply':
+            csv['Total supply'] += csv[col]
+    return csv['Total supply']
 
-print(df)
 
-df = df.astype(np.float64).fillna(method='bfill')
+def unifyData():
 
-# For simplication,
-# I will resample so that each row
-# represents a whole hour
+    plt.style.use('seaborn')
+    df = pd.DataFrame()
+    demand_path = 'demand/*'
+    demand = glob.glob(demand_path)
+    demand.sort()
+    supply_path = 'sources/*'
+    supply = glob.glob(supply_path)
+    supply.sort()
+
+    if len(demand) != len(supply):
+        print('Invalid data \n Demand data not equal in length with supply data')
+        return
+    else:
+        csvs = len(demand)
+
+    osSlash = demand[0][6]
+
+    if len(glob.glob("unified.csv")) == 0:
+        for i in range(csvs):
+            year, month, day, valid = validDate(demand[i], osSlash)
+            if(valid):
+                currentDemand = pd.read_csv(
+                    demand[i], usecols=['Time', 'Current demand'])
+                currentSupply = pd.read_csv(supply[i])
+                unified = pd.DataFrame(
+                    columns=['Datetime', 'Demand', 'Supply'])
+                # Datetime column
+                unified['Datetime'] = pd.to_datetime(
+                    month + '/' + day + '/' + year + ' ' + currentDemand['Time'])
+                # Demand column
+                unified["Demand"] = currentDemand['Current demand']
+                # Supply column
+                unified["Supply"] = totalSupply(currentSupply)
+
+                unified = unified.set_index('Datetime')
+                unified = unified.replace('?', np.nan)
+                df = pd.concat([df, unified])
+                # print(unified)
+                #print(f"{i+1} out of {csvs} included")
+
+        df.to_csv("unified.csv")
+
+    else:
+        df = pd.read_csv("unified.csv")
+        df['Datetime'] = pd.to_datetime(df['Datetime'])
+        df = df.set_index('Datetime')
+        df = df.astype(np.float64).fillna(method='bfill')
+
+    print(df)
+    return df
+
+
+# # For simplication,
+# # I will resample so that each row
+# # represents a whole hour
+df = unifyData()
+df.plot()
+
 df_uci_hourly = df.resample('H').sum()
-df_uci_hourly['hour'] = df_uci_hourly.index.hour
+df_uci_hourly['Hour'] = df_uci_hourly.index.hour
 df_uci_hourly.index = df_uci_hourly.index.date
 
 print(df_uci_hourly)
 
-df_uci_pivot = df_uci_hourly.pivot(columns='hour')
-# df_uci_pivot = df_uci_pivot.dropna()
+demand_pivot = df_uci_hourly.pivot(columns='Hour', values='Demand')
+demand_pivot = demand_pivot.dropna()
+supply_pivot = df_uci_hourly.pivot(columns='Hour', values='Supply')
+supply_pivot = supply_pivot.dropna()
 
-print(df_uci_pivot)
-df_uci_pivot.T.plot(figsize=(13, 8), legend=False, color='blue', alpha=0.02)
+demand_pivot.T.plot(figsize=(13, 8), legend=False,
+                    color='blue', alpha=0.02, title='Demand pivot')
+supply_pivot.T.plot(figsize=(13, 8), legend=False,
+                    color='red', alpha=0.02, title='Source pivot')
 plt.show()
