@@ -150,3 +150,9 @@ def our_dbscan(X, title):
 color_list = ['blue', 'red', 'green']
 df = create_dataset()
 x, db = our_dbscan(df, 'test')
+outIndex = []
+for i, label in enumerate(db.labels_):
+    if label == -1:
+        outIndex.append(i)
+for i in outIndex:
+    print(df.iloc[i])

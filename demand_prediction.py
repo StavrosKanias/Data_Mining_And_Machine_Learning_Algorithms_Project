@@ -10,8 +10,18 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 np.random.seed(7)
 
-
+outliers = ["2019-03-18",
+            "2019-05-21",
+            "2021-10-08",
+            "2021-11-30",
+            "2021-12-18",
+            "2021-12-19",
+            "2021-12-24",
+            "2021-12-25",
+            "2021-12-26"]
 # convert an array of values into a dataset matrix
+
+
 def create_dataset(dataset, look_back=1):
     dataX, dataY = [], []
     for i in range(len(dataset)-look_back-1):
@@ -30,6 +40,11 @@ def read_dataset():
     df['Demand-Renewable'] = df['Demand'] - df['Renewable']
     # df = df.iloc[:110000, :]
     df = df.dropna()
+
+    for i in outliers:
+        curIndex = df.loc[df['datetime'] == f'{i} 00:00:00'].index
+        for j in range(288):
+            df.drop(curIndex + j, inplace=True)
     return df
 
 
@@ -48,17 +63,18 @@ if __name__ == "__main__":
     test_size = len(dataset) - train_size
     train, test = dataset[0:train_size, :], dataset[train_size:len(dataset), :]
     # print(len(train), len(test))
-    trainX, trainY = create_dataset(train, look_back=1)
-    testX, testY = create_dataset(test, look_back=1)
+    look_back = 4
+    trainX, trainY = create_dataset(train, look_back=look_back)
+    testX, testY = create_dataset(test, look_back=look_back)
     # reshape input to be [samples, time steps, features]
     trainX = np.reshape(trainX, (trainX.shape[0], 1, trainX.shape[1]))
     testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
     # create and fit the LSTM network
     model = Sequential()
-    model.add(LSTM(32, input_shape=(1, 1)))
+    model.add(LSTM(32, input_shape=(1, look_back)))
     model.add(Dense(1))
     model.compile(loss='mean_squared_error', optimizer='adam')
-    model.fit(trainX, trainY, epochs=5, batch_size=64)
+    model.fit(trainX, trainY, epochs=5, batch_size=128)
 
     # make predictions
     trainPredict = model.predict(trainX)
@@ -77,11 +93,12 @@ if __name__ == "__main__":
     # shift train predictions for plotting
     trainPredictPlot = np.empty_like(dataset)
     trainPredictPlot[:, :] = np.nan
-    trainPredictPlot[1:len(trainPredict)+1, :] = trainPredict
+    trainPredictPlot[look_back:len(trainPredict)+look_back, :] = trainPredict
     # shift test predictions for plotting
     testPredictPlot = np.empty_like(dataset)
     testPredictPlot[:, :] = np.nan
-    testPredictPlot[len(trainPredict)+(1*2)+1:len(dataset)-1, :] = testPredict
+    testPredictPlot[len(trainPredict)+(look_back*2) +
+                    1:len(dataset)-1, :] = testPredict
     # plot baseline and predictions
     plt.plot(scaler.inverse_transform(dataset))
     plt.plot(trainPredictPlot)
