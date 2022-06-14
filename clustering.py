@@ -42,7 +42,10 @@ def tuneParams(X):
         by='score', ascending=False)['parameters'].iloc[0]
     tuned_eps = tunedParams[0]
     tuned_min_samples = tunedParams[1]
-    return tuned_eps, tuned_min_samples
+    bestScore = silhouette_scores_data.sort_values(
+        by='score', ascending=False)['score'].iloc[0]
+
+    return tuned_eps, tuned_min_samples, bestScore
 
 
 def create_pivot():
@@ -132,7 +135,7 @@ def our_dbscan():
     X = create_pivot()
     tsne = TSNE(random_state=1)
     X = tsne.fit_transform(X)
-    eps, min_samples = tuneParams(X)
+    eps, min_samples, silhouette_score = tuneParams(X)
     nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
@@ -155,8 +158,7 @@ def our_dbscan():
 
     print("Estimated number of clusters: %d" % n_clusters_)
     print("Estimated number of noise points: %d" % n_noise_)
-    print("Silhouette Coefficient: %0.3f" %
-          metrics.silhouette_score(X, labels))
+    print("Silhouette Coefficient: %0.3f" % silhouette_score)
     unique_labels = set(labels)
     plt.figure(1)
     colors = [plt.cm.Spectral(each)
