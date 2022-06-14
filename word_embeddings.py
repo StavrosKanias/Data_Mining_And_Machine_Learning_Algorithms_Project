@@ -23,7 +23,7 @@ def review_to_wordlist(review):
     return words
 
 
-def review_to_sentences(review, tokenizer, remove_stopwords=False):
+def review_to_sentences(review, tokenizer):
     raw_sentences = tokenizer.tokenize(review.strip())
     sentences = []
     for raw_sentence in raw_sentences:
@@ -46,7 +46,6 @@ def process(text):
 
 def readCSV(datapath):
     path = glob.glob(datapath)
-    # print(path)
     if len(glob.glob("cleanedup.csv")) == 0:
         df = pd.read_csv(path[0])
         df = df[df.Score != 3]
@@ -85,7 +84,6 @@ def get_avg_feature_vecs(reviews, model, num_features):
         (len(reviews), num_features), dtype='float32')
 
     for review in reviews:
-        # print(counter)
         review_feature_vecs[counter] = make_feature_vec(
             review, model, num_features)
         counter = counter + 1
@@ -102,11 +100,11 @@ if __name__ == "__main__":
     train_size = int(len(df) * 0.5)
     train_reviews = df.iloc[:train_size, :]
     test_reviews = df.iloc[train_size:, :]
-    print('Training set contains {:d} reviews.'.format(len(train_reviews)))
-    print('Test set contains {:d} reviews'.format(len(test_reviews)))
+    print(f'Training set contains {len(train_reviews):d} reviews.')
+    print(f'Test set contains {len(test_reviews):d} reviews')
     n_pos_train = sum(train_reviews['Class'] == 1)
-    print('Training set contains {:.2%} positive reviews'.format(
-        n_pos_train/len(train_reviews)))
+    print(
+        f'Training set contains {(n_pos_train/len(train_reviews)):.2%} positive reviews')
     n_pos_test = sum(test_reviews['Class'] == 1)
     print('Test set contains {:.2%} positive reviews'.format(
         n_pos_test/len(test_reviews)))
@@ -127,12 +125,6 @@ if __name__ == "__main__":
                                   vector_size=num_features, min_count=min_word_count,
                                   window=context, sample=downsampling)
 
-        # If you don't plan to train the model any further, calling
-        # init_sims will make the model much more memory-efficient.
-        # model.init_sims(replace=True)
-
-        # It can be helpful to create a meaningful model name and
-        # save the model for later use. You can load it later using Word2Vec.load()
         model.save(model_name)
     else:
         model = Word2Vec.load(model_name)
@@ -161,8 +153,7 @@ if __name__ == "__main__":
         # remove instances in test set that could not be represented as feature vectors
         nan_indices = list({x for x, y in np.argwhere(np.isnan(testDataVecs))})
         if len(nan_indices) > 0:
-            print('Removing {:d} instances from test set.'.format(
-                len(nan_indices)))
+            print(f'Removing {len(nan_indices)} instances from test set.')
             testDataVecs = np.delete(testDataVecs, nan_indices, axis=0)
             test_reviews.drop(
                 test_reviews.iloc[nan_indices, :].index, axis=0, inplace=True)
@@ -181,7 +172,7 @@ if __name__ == "__main__":
 
         plt.figure(1)
         plt.plot([0, 1], [0, 1], 'k--')
-        plt.plot(fpr, tpr, label='AUC {:.3f}'.format(auc))
+        plt.plot(fpr, tpr, label=f'AUC {auc:.3f}')
         plt.xlabel('False positive rate')
         plt.ylabel('True positive rate')
         plt.title('ROC curve')
