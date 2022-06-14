@@ -115,7 +115,7 @@ if __name__ == "__main__":
     model_name = "MyWord2Vec.model"
     # Set values for various word2vec parameters
     num_features = 400    # Word vector dimensionality
-    min_word_count = 40   # Minimum word count
+    min_word_count = 150   # Minimum word count
     num_workers = 4      # Number of threads to run in parallel
     context = 10          # Context window size
     downsampling = 1e-3   # Downsample setting for frequent words
