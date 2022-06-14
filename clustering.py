@@ -59,22 +59,21 @@ def create_dataset():
     # For simplication,
     # I will resample so that each row
     # represents a whole hour
-    df_uci_hourly = df.resample('H').sum()
-    df_uci_hourly['Hour'] = df_uci_hourly.index.hour
-    df_uci_hourly.index = df_uci_hourly.index.date
-    return df_uci_hourly
+    df_uci_daily = df.resample('d').sum()
+    df_uci_daily['day'] = df_uci_daily.index.day
+    df_uci_daily.index = df_uci_daily.index.date
+    df_uci_daily.drop(['day'], axis=1, inplace=True)
+    return df_uci_daily
 
 
 def our_dbscan(X, title):
     tsne = TSNE(random_state=1)
     X = tsne.fit_transform(X)
-    print('1')
     eps, min_samples, silhouette_score = tuneParams(X)
-    print('1')
     nbrs = NearestNeighbors(n_neighbors=min_samples).fit(X)
 
     neist_dist, neist_ind = nbrs.kneighbors(X)
-    print('1')
+
     sort_neight_dist = np.sort(neist_dist, axis=0)
 
     k_dist = sort_neight_dist[:, 10]
@@ -82,16 +81,16 @@ def our_dbscan(X, title):
     plt.plot(k_dist)
     plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
     plt.savefig('Optimal eps for ' + title + '.png')
-    print('1')
+
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
     labels = db.labels_
-    print('1')
+
     # Number of clusters in labels, ignoring noise if present.
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     n_noise_ = list(labels).count(-1)
-    print('1')
+
     print("Estimated number of clusters: %d" % n_clusters_)
     print("Estimated number of noise points: %d" % n_noise_)
     print("Silhouette Coefficient: %0.3f" % silhouette_score)
@@ -136,14 +135,5 @@ def our_dbscan(X, title):
 
 
 color_list = ['blue', 'red', 'green']
-# X, cluster_values, df_uci_pivot = cluster_KMeans()
 df = create_dataset()
-print(df)
-x, db = our_dbscan(df, 'test3')
-# x = our_dbscan()
-# our_dbscan(D, 'demand')
-# our_dbscan(S, 'supply')
-# plot_sillhouete_clusers(X, cluster_values, color_list, df_uci_pivot)
-# plt.figure(2)
-# plot_scatter_clusters(X, cluster_values, color_list, df_uci_pivot)
-# plt.show()
+x, db = our_dbscan(df, 'test')

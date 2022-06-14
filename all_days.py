@@ -26,12 +26,11 @@ def validDate(csv, osSlash):
             month + '/' + day + '/' + year, '%m/%d/%Y')
         return year, month, day, True
     except ValueError:
-        #print('Invalid date: ' + month + '/' + day + '/' + year)
+        # print('Invalid date: ' + month + '/' + day + '/' + year)
         return year, month, day, False
 
 
 def totalSupply(csv):
-    csv = csv.drop(["Time"], axis=1)
     csv['Total supply'] = 0
     for col in csv.columns:
         if col != 'Total supply':
@@ -64,7 +63,10 @@ def unifyData():
             if(valid):
                 currentDemand = pd.read_csv(
                     demand[i], usecols=['Time', 'Current demand'])
-                currentSupply = pd.read_csv(supply[i])
+
+                currentSupply = pd.read_csv(supply[i]).drop(["Time"], axis=1)
+                currentSupply = currentSupply.replace(
+                    '', np.nan).astype(np.float64).fillna(value=0.0)
                 unified = pd.DataFrame(
                     columns=['Datetime', 'Demand', 'Supply'])
                 # Datetime column
@@ -76,10 +78,11 @@ def unifyData():
                 unified["Supply"] = totalSupply(currentSupply)
 
                 unified = unified.set_index('Datetime')
-                unified = unified.replace('?', np.nan)
-                df = pd.concat([df, unified])
+                unified = unified.replace('?', np.nan).astype(
+                    np.float64).fillna(method='bfill').dropna()
                 # print(unified)
-                #print(f"{i+1} out of {csvs} included")
+                df = pd.concat([df, unified])
+                print(f"{i+1} out of {csvs} included")
 
         df.to_csv("unified.csv")
 
@@ -87,8 +90,8 @@ def unifyData():
         df = pd.read_csv("unified.csv")
         df['Datetime'] = pd.to_datetime(df['Datetime'])
         df = df.set_index('Datetime')
-        df = df.astype(np.float64).fillna(method='bfill')
 
+    df = df.astype(np.float64).fillna(method='bfill')
     print(df)
     return df
 
