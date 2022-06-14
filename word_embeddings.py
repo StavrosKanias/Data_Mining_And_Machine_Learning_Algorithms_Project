@@ -97,7 +97,7 @@ if __name__ == "__main__":
     df.hist(column="Score")
     plt.show()
     df['Class'] = 1 * (df['Score'] > 3)
-    train_size = int(len(df) * 0.5)
+    train_size = int(len(df) * 0.8)
     train_reviews = df.iloc[:train_size, :]
     test_reviews = df.iloc[train_size:, :]
     print(f'Training set contains {len(train_reviews):d} reviews.')
