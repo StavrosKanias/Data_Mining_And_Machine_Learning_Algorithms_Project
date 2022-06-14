@@ -1,5 +1,4 @@
 from gensim.models import Word2Vec, word2vec
-import logging
 import matplotlib.pyplot as plt
 import nltk
 from nltk.stem import WordNetLemmatizer
@@ -8,18 +7,11 @@ from nltk.corpus import stopwords
 import numpy as np
 import os
 import pandas as pd
-import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, roc_curve
-from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve
 import string
 import re
-from tqdm import tqdm
 import glob
-
-MAX_LEN = 150
-MAX_WORDS = 400
 
 
 def review_to_wordlist(review):
@@ -65,59 +57,133 @@ def readCSV(datapath):
     return df
 
 
-# def train_model(df):
-#     X = df.Text
-#     Y = df.Score
+def make_feature_vec(words, model, num_features):
+    """
+    Average the word vectors for a set of words
+    """
+    feature_vec = np.zeros(
+        (num_features,), dtype="float32")  # pre-initialize (for speed)
+    nwords = 0
+    index2word_set = set(model.wv.index_to_key)  # words known to the model
 
-#     X_Train, X_Test, Y_Train, Y_Test = train_test_split(X, Y, test_size=0.2)
-
-#     # Tokenizer
-#     tok = Tokenizer(num_words=MAX_WORDS)
-#     tok.fit_on_texts(X_Train)
-#     sequences = tok.texts_to_sequences(X_Train)
-#     sequences_matrix = pad_sequences(sequences, maxlen=MAX_LEN)
-
-#     tok = Tokenizer(num_words=MAX_WORDS)
-#     tok.fit_on_texts(X_Test)
-#     sequences = tok.texts_to_sequences(X_Test)
-#     sequences_matrix_test = pad_sequences(sequences, maxlen=MAX_LEN)
-
-#     return X_Train, X_Test, Y_Train, Y_Test, sequences_matrix, sequences_matrix_test
+    for word in words:
+        if word in index2word_set:
+            nwords = nwords + 1
+            feature_vec = np.add(feature_vec, model.wv[word])
+    if nwords > 0:
+        feature_vec = np.divide(feature_vec, nwords)
+    return feature_vec
 
 
-# def random_forest(dataset):
-#     x_train, x_test, y_train, y_test, seq1, seq2 = train_model(dataset)
-#     clf = RandomForestClassifier(
-#         random_state=0, n_estimators=100, max_features=1.0, bootstrap=False)
-#     clf.fit(seq1, y_train)
-#     predictions = clf.predict(seq2)
-#     return y_test, predictions
+def get_avg_feature_vecs(reviews, model, num_features):
+    """
+    Calculate average feature vectors for all reviews
+    """
+    counter = 0
+    # pre-initialize (for speed)
+    review_feature_vecs = np.zeros(
+        (len(reviews), num_features), dtype='float32')
 
-
-# def evaluate(y_test, predictions):
-#     recall = recall_score(y_test, predictions, average='macro')
-#     precision = precision_score(y_test, predictions, average='macro')
-#     f1 = f1_score(y_test, predictions, average='macro')
-#     true_pos = 0
-#     true_neg = 0
-#     false_pos = 0
-#     false_neg = 0
-#     for i in range(y_test.size):
-#         if predictions[i] == y_test[i] and y_test[i] == 1:
-#             true_pos += 1
-#         if predictions[i] == y_test[i] and y_test[i] == 0:
-#             true_neg += 1
-#         if predictions[i] != y_test[i] and predictions[i] == 1:
-#             false_pos += 1
-#         if predictions[i] != y_test[i] and predictions[i] == 0:
-#             false_neg += 1
-#     print({"true pos": true_pos, "false pos": false_pos})
-#     print({"false neg": false_neg, "true neg": true_neg})
-#     return {"precision": precision, "recall": recall, "f1": f1}
+    for review in reviews:
+        # print(counter)
+        review_feature_vecs[counter] = make_feature_vec(
+            review, model, num_features)
+        counter = counter + 1
+    return review_feature_vecs
 
 
 if __name__ == "__main__":
     datapath = "amazon.csv"
+    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
     df = readCSV(datapath)
     df.hist(column="Score")
     plt.show()
+    df['Class'] = 1 * (df['Score'] > 3)
+    train_size = int(len(df) * 0.5)
+    train_reviews = df.iloc[:train_size, :]
+    test_reviews = df.iloc[train_size:, :]
+    print('Training set contains {:d} reviews.'.format(len(train_reviews)))
+    print('Test set contains {:d} reviews'.format(len(test_reviews)))
+    n_pos_train = sum(train_reviews['Class'] == 1)
+    print('Training set contains {:.2%} positive reviews'.format(
+        n_pos_train/len(train_reviews)))
+    n_pos_test = sum(test_reviews['Class'] == 1)
+    print('Test set contains {:.2%} positive reviews'.format(
+        n_pos_test/len(test_reviews)))
+    train_sentences = []
+    for review in train_reviews['Text']:
+        train_sentences += review_to_sentences(review, tokenizer)
+
+    model_name = "MyWord2Vec.model"
+    # Set values for various word2vec parameters
+    num_features = 300    # Word vector dimensionality
+    min_word_count = 40   # Minimum word count
+    num_workers = 3       # Number of threads to run in parallel
+    context = 10          # Context window size
+    downsampling = 1e-3   # Downsample setting for frequent words
+    if not os.path.exists(model_name):
+        # Initialize and train the model (this will take some time)
+        model = word2vec.Word2Vec(train_sentences, workers=num_workers,
+                                  vector_size=num_features, min_count=min_word_count,
+                                  window=context, sample=downsampling)
+
+        # If you don't plan to train the model any further, calling
+        # init_sims will make the model much more memory-efficient.
+        model.init_sims(replace=True)
+
+        # It can be helpful to create a meaningful model name and
+        # save the model for later use. You can load it later using Word2Vec.load()
+        model.save(model_name)
+    else:
+        model = Word2Vec.load(model_name)
+
+    clean_train_reviews = []
+    for review in train_reviews['Text']:
+        clean_train_reviews.append(
+            review_to_wordlist(review))
+    trainDataVecs = get_avg_feature_vecs(
+        clean_train_reviews, model, num_features)
+
+    clean_test_reviews = []
+    for review in test_reviews['Text']:
+        clean_test_reviews.append(
+            review_to_wordlist(review))
+    testDataVecs = get_avg_feature_vecs(
+        clean_test_reviews, model, num_features)
+    estimators = [10, 50, 100, 200, 500, 1000]
+    accuracy = []
+    for n_estimators in estimators:
+        forest = RandomForestClassifier(
+            n_estimators=n_estimators, class_weight='balanced_subsample')
+        print("Fitting a random forest to labeled training data...")
+        forest = forest.fit(trainDataVecs, train_reviews['Class'])
+
+        # remove instances in test set that could not be represented as feature vectors
+        nan_indices = list({x for x, y in np.argwhere(np.isnan(testDataVecs))})
+        if len(nan_indices) > 0:
+            print('Removing {:d} instances from test set.'.format(
+                len(nan_indices)))
+            testDataVecs = np.delete(testDataVecs, nan_indices, axis=0)
+            test_reviews.drop(
+                test_reviews.iloc[nan_indices, :].index, axis=0, inplace=True)
+            assert testDataVecs.shape[0] == len(test_reviews)
+
+        print(f"Estimators used: {n_estimators}")
+        print("Predicting labels for test data..")
+        result = forest.predict(testDataVecs)
+
+        print(classification_report(test_reviews['Class'], result))
+        accuracy.append(classification_report(test_reviews['Class'], result))
+        probs = forest.predict_proba(testDataVecs)[:, 1]
+
+        fpr, tpr, _ = roc_curve(test_reviews['Class'], probs)
+        auc = roc_auc_score(test_reviews['Class'], probs)
+
+        plt.figure(1)
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.plot(fpr, tpr, label='AUC {:.3f}'.format(auc))
+        plt.xlabel('False positive rate')
+        plt.ylabel('True positive rate')
+        plt.title('ROC curve')
+        plt.legend(loc='best')
+        plt.show()

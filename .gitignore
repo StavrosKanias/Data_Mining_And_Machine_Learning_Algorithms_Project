@@ -2,3 +2,4 @@
 demand/*
 sources/*
 amazon.csv
+MyWord2Vec.model
