@@ -28,7 +28,7 @@ def read_dataset():
     df_demand.drop('Datetime', axis=1, inplace=True)
     df = df_sources.join(df_demand)
     df['Demand-Renewable'] = df['Demand'] - df['Renewable']
-    df = df.iloc[:110000, :]
+    # df = df.iloc[:110000, :]
     df = df.dropna()
     return df
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     testX = np.reshape(testX, (testX.shape[0], 1, testX.shape[1]))
     # create and fit the LSTM network
     model = Sequential()
-    model.add(LSTM(16, input_shape=(1, 1)))
+    model.add(LSTM(32, input_shape=(1, 1)))
     model.add(Dense(1))
     model.compile(loss='mean_squared_error', optimizer='adam')
     model.fit(trainX, trainY, epochs=5, batch_size=64)
