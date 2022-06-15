@@ -75,6 +75,31 @@ def yearPieChart(year="2019"):
         kind='pie', y='production', autopct='%1.2f%%', title=f"PieChart for year {year}")
 
 
+def histPlot():
+    global osSlash
+    dates = ("20190501", "20200914", "20211212", "20200906")
+    normalDate = ("05/01/2019", "09/14/2020", "12/12/2021", "09/06/2020")
+    for id, date in enumerate(dates):
+        # plt.figure(id+1)
+        cursource = "sources"+osSlash+date+".csv"
+        dfSource = pandas.read_csv(cursource)
+        dfSource.drop(["Time"], axis=1, inplace=True)
+        scores = pandas.DataFrame(
+            {'team': dfSource.columns.to_list(), 'production': [dfSource[i].sum() for i in dfSource.columns]})
+        scores.plot.bar(x='team', y='production', title=normalDate[id])
+
+
+def yearHistPlot(year="2019"):
+    df = pandas.read_csv("unified.csv")
+    df['Datetime'] = [i.split('-')[0] for i in df['Datetime']]
+    df = df[df.Datetime == year]
+    df.drop(['Datetime', 'Demand', 'Supply', "Renewable",
+            'Non-Renewable'], axis=1, inplace=True)
+    scores = pandas.DataFrame({'team': df.columns.to_list(), 'production': [
+                              df[i].sum() for i in df.columns]})
+    scores.plot.bar(x='team', y='production', title=f'Year = {year}')
+
+
 def categorizeEnergy(df):
     time = pandas.DataFrame(df[["Time"]])
     renewable = pandas.DataFrame(df[["Solar", "Wind"]])
@@ -189,5 +214,7 @@ if __name__ == "__main__":
     main()
     pieCharts()
     yearPieChart('2019')
+    histPlot()
+    yearHistPlot('2019')
     plt.show()
     pass
