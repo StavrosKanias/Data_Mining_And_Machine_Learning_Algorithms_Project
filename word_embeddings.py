@@ -4,7 +4,6 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 import numpy as np
 from nltk.corpus import stopwords
-import numpy as np
 import os
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
