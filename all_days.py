@@ -38,13 +38,13 @@ def getSupply(csv):
 
     renew = ["Solar", "Wind"]
     df_renewable = pd.read_csv(csv, usecols=renew).replace('', np.nan).astype(
-        np.float64).fillna(method='bfill').dropna()
+        np.float64).fillna(method='bfill')
     df_renewable['Renewable'] = df_renewable[renew].sum(axis=1)
 
     cols.remove("Solar")
     cols.remove("Wind")
     df_not_renewable = pd.read_csv(csv, usecols=cols).replace('', np.nan).astype(
-        np.float64).fillna(method='bfill').dropna()
+        np.float64).fillna(method='bfill')
     df_not_renewable = df_not_renewable.replace('', np.nan)
     for i, c in enumerate(cols):
         stdc = c[0].upper() + c[1:].lower()
@@ -104,10 +104,6 @@ def unifyData():
 
                 # Supply columns
                 total_supply = getSupply(supply[i])
-
-                if total_supply.isnull().values.any() or currentDemand.isnull().values.any():
-                    continue
-
                 total_supply['Datetime'] = pd.to_datetime(
                     month + '/' + day + '/' + year + ' ' + currentDemand['Time'])
 
@@ -115,13 +111,11 @@ def unifyData():
                 total_supply = total_supply.set_index('Datetime')
 
                 unified = unified.replace('', np.nan).astype(
-                    np.float64).fillna(method='bfill').dropna()
+                    np.float64).fillna(method='bfill')
                 total_supply = total_supply.replace('', np.nan).astype(
-                    np.float64).fillna(method='bfill').dropna()
+                    np.float64).fillna(method='bfill')
                 # print(total_supply)
                 unified = unified.join(total_supply)
-                if total_supply.isnull().values.any():
-                    continue
                 df = pd.concat([df, unified])
                 print(f"{i+1} out of {csvs} included")
 
