@@ -94,8 +94,11 @@ def unifyData():
 
                 currentDemand = pd.read_csv(
                     demand[i], usecols=['Time', 'Current demand'])
-
+                total_supply = getSupply(supply[i])
                 unified = pd.DataFrame()
+                if total_supply.isnull().values.any():
+                    print('Invalid data \n Supply data is null')
+                    continue
                 # Datetime column
                 unified['Datetime'] = pd.to_datetime(
                     month + '/' + day + '/' + year + ' ' + currentDemand['Time'])
@@ -103,7 +106,7 @@ def unifyData():
                 unified["Demand"] = currentDemand['Current demand']
 
                 # Supply columns
-                total_supply = getSupply(supply[i])
+
                 total_supply['Datetime'] = pd.to_datetime(
                     month + '/' + day + '/' + year + ' ' + currentDemand['Time'])
 
