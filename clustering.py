@@ -49,13 +49,13 @@ def create_dataset():
     df = df.astype(np.float64).fillna(method='bfill')
 
     # print(df)
-
     # For simplication,
     # I will resample so that each row
     # represents a whole hour
     df_uci_daily = df.resample('d').mean()
     df_uci_daily['day'] = df_uci_daily.index.day
     df_uci_daily.index = df_uci_daily.index.date
+    df_uci_daily.dropna(inplace=True)
     return df_uci_daily
 
 
@@ -81,7 +81,7 @@ def our_dbscan(X, title):
     plt.figure()
     plt.plot(k_dist)
     plt.axhline(y=eps, linewidth=1, linestyle='dashed', color='k')
-    plt.savefig('Optimal eps for ' + title + '.png')
+    plt.savefig('plots/Optimal eps for ' + title + '.png')
 
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -129,7 +129,7 @@ def our_dbscan(X, title):
 
     plt.title("Estimated number of clusters: %d" % n_clusters_)
     plt.legend()
-    plt.savefig('DBscan clusters for ' + title + '.png')
+    plt.savefig('plots/DBscan clusters for ' + title + '.png')
     # plt.show()
 
     return X, db
@@ -143,4 +143,4 @@ for i, label in enumerate(db.labels_):
     if label == -1:
         outIndex.append(i)
 for i in outIndex:
-    print(i)
+    print(df.iloc[i])

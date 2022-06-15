@@ -3,6 +3,7 @@ import glob
 from datetime import datetime
 import math
 import matplotlib.pyplot as plt
+import random
 
 osSlash = "/"
 
@@ -84,9 +85,15 @@ def histPlot():
         cursource = "sources"+osSlash+date+".csv"
         dfSource = pandas.read_csv(cursource)
         dfSource.drop(["Time"], axis=1, inplace=True)
+        colors = []
+        for _ in dfSource.columns.tolist():
+            rgb = (random.random(), random.random(), random.random())
+            colors.append(rgb)
         scores = pandas.DataFrame(
             {'team': dfSource.columns.to_list(), 'production': [dfSource[i].sum() for i in dfSource.columns]})
-        scores.plot.bar(x='team', y='production', title=normalDate[id])
+        scores.plot.barh(x='team', y='production',
+                         title=normalDate[id], color=colors)
+        plt.savefig('plots/production' + date)
 
 
 def yearHistPlot(year="2019"):
@@ -95,9 +102,15 @@ def yearHistPlot(year="2019"):
     df = df[df.Datetime == year]
     df.drop(['Datetime', 'Demand', 'Supply', "Renewable",
             'Non-Renewable'], axis=1, inplace=True)
+    colors = []
+    for _ in df.columns.tolist():
+        rgb = (random.random(), random.random(), random.random())
+        colors.append(rgb)
     scores = pandas.DataFrame({'team': df.columns.to_list(), 'production': [
                               df[i].sum() for i in df.columns]})
-    scores.plot.bar(x='team', y='production', title=f'Year = {year}')
+    scores.plot.barh(x='team', y='production',
+                     title=f'Year = {year}', color=colors)
+    plt.savefig('plots/production' + year)
 
 
 def categorizeEnergy(df):
@@ -211,10 +224,9 @@ def dayMeanDemand(df, column):
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     pieCharts()
     yearPieChart('2019')
     histPlot()
     yearHistPlot('2019')
     plt.show()
-    pass
