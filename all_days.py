@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from datetime import datetime
-from csv import reader
 
 
 def hourly(df, column):

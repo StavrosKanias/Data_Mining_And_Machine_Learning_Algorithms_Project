@@ -1,13 +1,7 @@
-from sklearn.cluster import KMeans
-from sklearn.manifold import TSNE
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import NearestNeighbors
-from collections import Counter
-import seaborn as sns
 import numpy as np
-from sklearn import metrics
 import pandas as pd
 import matplotlib.pyplot as plt
 
