@@ -137,7 +137,7 @@ def our_dbscan(X, title):
 
 color_list = ['blue', 'red', 'green']
 df = create_dataset()
-x, db = our_dbscan(df, 'test')
+x, db = our_dbscan(df, 'demand-supply')
 outIndex = []
 for i, label in enumerate(db.labels_):
     if label == -1:

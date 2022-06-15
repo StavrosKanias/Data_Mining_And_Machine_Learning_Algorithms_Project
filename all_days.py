@@ -97,7 +97,7 @@ def unifyData():
                 total_supply = getSupply(supply[i])
                 unified = pd.DataFrame()
                 if total_supply.isnull().values.any():
-                    print('Invalid data \n Supply data is null')
+                    print('Invalid data \n Missing supply values ')
                     continue
                 # Datetime column
                 unified['Datetime'] = pd.to_datetime(
@@ -135,21 +135,23 @@ def unifyData():
 
 
 df = unifyData()
-# df.plot()
+df.plot()
+plt.savefig('plots/demand-supply.png')
+df_uci_hourly = df.resample('H').sum()
+df_uci_hourly['Hour'] = df_uci_hourly.index.hour
+df_uci_hourly.index = df_uci_hourly.index.date
 
-# df_uci_hourly = df.resample('H').sum()
-# df_uci_hourly['Hour'] = df_uci_hourly.index.hour
-# df_uci_hourly.index = df_uci_hourly.index.date
+print(df_uci_hourly)
 
-# print(df_uci_hourly)
+demand_pivot = df_uci_hourly.pivot(columns='Hour', values='Demand')
+demand_pivot = demand_pivot.dropna()
+supply_pivot = df_uci_hourly.pivot(columns='Hour', values='Supply')
+supply_pivot = supply_pivot.dropna()
 
-# demand_pivot = df_uci_hourly.pivot(columns='Hour', values='Demand')
-# demand_pivot = demand_pivot.dropna()
-# supply_pivot = df_uci_hourly.pivot(columns='Hour', values='Supply')
-# supply_pivot = supply_pivot.dropna()
-
-# demand_pivot.T.plot(figsize=(13, 8), legend=False,
-#                     color='blue', alpha=0.02, title='Demand pivot')
-# supply_pivot.T.plot(figsize=(13, 8), legend=False,
-#                     color='red', alpha=0.02, title='Source pivot')
+demand_pivot.T.plot(figsize=(13, 8), legend=False,
+                    color='blue', alpha=0.02, title='Demand pivot')
+plt.savefig('plots/demandPivot.png')
+supply_pivot.T.plot(figsize=(13, 8), legend=False,
+                    color='red', alpha=0.02, title='Source pivot')
+plt.savefig('plots/supplyPivot.png')
 # plt.show()

@@ -44,7 +44,8 @@ def main():
         {"Day": days, "Mean": means, "Day ahead forecast": expectedMeans[:-1], "Source": energy})
     showRandomDays()
     plotdf(demandDf, "Monthly demand", 0)
-    plt.show()
+    plt.savefig('plots/monthlyDemand.png')
+    # plt.show()
 
 
 def pieCharts():
@@ -61,6 +62,7 @@ def pieCharts():
         scores.drop(scores[scores['production'] <= 0].index, inplace=True)
         scores.groupby(['team']).sum().plot(
             kind='pie', y='production', autopct='%1.2f%%', title=normalDate[id])
+        plt.savefig('plots/pieChart' + date + '.png')
 
 
 def yearPieChart(year="2019"):
@@ -74,6 +76,7 @@ def yearPieChart(year="2019"):
     scores.drop(scores[scores['production'] <= 0].index, inplace=True)
     scores.groupby(['team']).sum().plot(
         kind='pie', y='production', autopct='%1.2f%%', title=f"PieChart for year {year}")
+    plt.savefig('plots/pieChart' + year + '.png')
 
 
 def histPlot():
@@ -93,7 +96,7 @@ def histPlot():
             {'team': dfSource.columns.to_list(), 'production': [dfSource[i].sum() for i in dfSource.columns]})
         scores.plot.barh(x='team', y='production',
                          title=normalDate[id], color=colors)
-        plt.savefig('plots/production' + date)
+        plt.savefig('plots/production' + date + '.png')
 
 
 def yearHistPlot(year="2019"):
@@ -110,7 +113,7 @@ def yearHistPlot(year="2019"):
                               df[i].sum() for i in df.columns]})
     scores.plot.barh(x='team', y='production',
                      title=f'Year = {year}', color=colors)
-    plt.savefig('plots/production' + year)
+    plt.savefig('plots/production' + year + '.png')
 
 
 def categorizeEnergy(df):
@@ -144,6 +147,7 @@ def duck_curve(dfDemand, dfSource, day):
     plt.plot(time["Time"], nonRenewable["SUM"], label="Dispatchable")
     plt.grid()
     plt.legend()
+    plt.savefig('plots/duckCurve' + day + '.png')
 
 
 def plotdf(demandDf, title, figure):
@@ -194,6 +198,7 @@ def plotdf(demandDf, title, figure):
     plt.plot_date(days, means, "r.", xdate=True, markersize=3)
     plt.plot_date(days, expectedDemand, "b.", xdate=True, markersize=3)
     plt.legend(("Day Mean", "Day Predicted", "Energy Produced"))
+    plt.savefig('plots/df' + title + '.png')
 
 
 def dayMeanSource(df):
@@ -224,9 +229,9 @@ def dayMeanDemand(df, column):
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     pieCharts()
     yearPieChart('2019')
     histPlot()
     yearHistPlot('2019')
-    plt.show()
+    # plt.show()

@@ -103,5 +103,5 @@ if __name__ == "__main__":
     plt.plot(scaler.inverse_transform(dataset))
     plt.plot(trainPredictPlot)
     plt.plot(testPredictPlot)
-    plt.savefig('plots/demand prediction.png')
+    plt.savefig('plots/NonRenewableSupplyPrediction.png')
     plt.show()

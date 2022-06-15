@@ -12,6 +12,7 @@ import string
 import re
 import glob
 
+nltk.download('punkt')
 
 def review_to_wordlist(review):
     review_text = re.sub("[^a-zA-Z]", " ", review)
