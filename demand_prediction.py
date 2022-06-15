@@ -11,8 +11,7 @@ from sklearn.metrics import mean_squared_error
 np.random.seed(7)
 
 outliers = [
-    "2019-01-02",
-    "2019-03-26",
+    "2020-04-19",
     "2020-08-14",
     "2020-08-15",
     "2020-08-17",
@@ -35,16 +34,14 @@ def create_dataset(dataset, look_back=1):
 
 
 def read_dataset():
-    df_demand = pd.read_csv("unified.csv")
-    df_sources = pd.read_csv("summedSources.csv")
-    df_demand.drop('Supply', axis=1, inplace=True)
-    df_demand.drop('Datetime', axis=1, inplace=True)
-    df = df_sources.join(df_demand)
+    df = pd.read_csv("unified.csv", usecols=[
+                     'Datetime', 'Demand', 'Renewable'])
     df['Demand-Renewable'] = df['Demand'] - df['Renewable']
-    df = df.dropna()
+    df.dropna(inplace=True)
+    print(df)
 
     for i in outliers:
-        curIndex = df.loc[df['datetime'] == f'{i} 00:00:00'].index
+        curIndex = df.loc[df['Datetime'] == f'{i} 00:00:00'].index
         print(curIndex)
         for j in range(288):
             df.drop(index=(curIndex + j), axis=0, inplace=True)
@@ -106,4 +103,5 @@ if __name__ == "__main__":
     plt.plot(scaler.inverse_transform(dataset))
     plt.plot(trainPredictPlot)
     plt.plot(testPredictPlot)
+    plt.savefig('plots/demand prediction.png')
     plt.show()
