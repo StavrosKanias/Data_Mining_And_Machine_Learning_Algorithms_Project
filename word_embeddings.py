@@ -12,7 +12,6 @@ import string
 import re
 import glob
 
-nltk.download('punkt')
 
 def review_to_wordlist(review):
     review_text = re.sub("[^a-zA-Z]", " ", review)
@@ -94,7 +93,12 @@ if __name__ == "__main__":
     datapath = "amazon.csv"
     original = pd.read_csv(datapath)
     original.hist(column='Score')
-    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+    try:
+        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+    except:
+        nltk.download('punkt')
+        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+
     df = readCSV(datapath)
     df.hist(column="Score")
     plt.show()
