@@ -92,6 +92,8 @@ def get_avg_feature_vecs(reviews, model, num_features):
 
 if __name__ == "__main__":
     datapath = "amazon.csv"
+    original = pd.read_csv(datapath)
+    original.hist(column='Score')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
     df = readCSV(datapath)
     df.hist(column="Score")
@@ -142,7 +144,7 @@ if __name__ == "__main__":
             review_to_wordlist(review))
     testDataVecs = get_avg_feature_vecs(
         clean_test_reviews, model, num_features)
-    estimators = [10, 50, 100, 200, 500, 1000]
+    estimators = [10, 50, 100, 200, 500]
     accuracy = []
     for n_estimators in estimators:
         forest = RandomForestClassifier(
