@@ -93,6 +93,7 @@ def unifyData():
 
                 currentDemand = pd.read_csv(
                     demand[i], usecols=['Time', 'Current demand'])
+                currentDemand.drop(currentDemand.tail(1).index, inplace=True)
                 total_supply = getSupply(supply[i])
                 unified = pd.DataFrame()
                 if total_supply.isnull().values.any():

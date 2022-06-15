@@ -46,6 +46,35 @@ def main():
     plt.show()
 
 
+def pieCharts():
+    global osSlash
+    dates = ("20190501", "20200914", "20211212", "20200906")
+    normalDate = ("05/01/2019", "09/14/2020", "12/12/2021", "09/06/2020")
+    for id, date in enumerate(dates):
+        # plt.figure(id+1)
+        cursource = "sources"+osSlash+date+".csv"
+        dfSource = pandas.read_csv(cursource)
+        dfSource.drop(["Time"], axis=1, inplace=True)
+        scores = pandas.DataFrame(
+            {'team': dfSource.columns.to_list(), 'production': [dfSource[i].sum() for i in dfSource.columns]})
+        scores.drop(scores[scores['production'] <= 0].index, inplace=True)
+        scores.groupby(['team']).sum().plot(
+            kind='pie', y='production', autopct='%1.2f%%', title=normalDate[id])
+
+
+def yearPieChart(year="2019"):
+    df = pandas.read_csv("unified.csv")
+    df['Datetime'] = [i.split('-')[0] for i in df['Datetime']]
+    df = df[df.Datetime == year]
+    df.drop(['Datetime', 'Demand', 'Supply', "Renewable",
+            'Non-Renewable'], axis=1, inplace=True)
+    scores = pandas.DataFrame({'team': df.columns.to_list(), 'production': [
+                              df[i].sum() for i in df.columns]})
+    scores.drop(scores[scores['production'] <= 0].index, inplace=True)
+    scores.groupby(['team']).sum().plot(
+        kind='pie', y='production', autopct='%1.2f%%', title=f"PieChart for year {year}")
+
+
 def categorizeEnergy(df):
     time = pandas.DataFrame(df[["Time"]])
     renewable = pandas.DataFrame(df[["Solar", "Wind"]])
@@ -69,7 +98,7 @@ def duck_curve(dfDemand, dfSource, day):
     time, renewable, nonRenewable = categorizeEnergy(dfSource)
     renewable["SUM"] = renewable.sum(axis=1)
     nonRenewable["SUM"] = nonRenewable.sum(axis=1)
-    currentDemand = pandas.DataFrame(dfDemand[["Current demand"]][:-1])
+    currentDemand = pandas.DataFrame(dfDemand[["Current demand"]][: -1])
     plt.title(day)
     plt.plot(time["Time"], currentDemand["Current demand"],
              label="Current Demand")
@@ -89,7 +118,7 @@ def plotdf(demandDf, title, figure):
     plt.figure(figure)
     cnt = 0
     for day, mean, expected, produced in zip(demandDf["Day"], demandDf["Mean"], demandDf["Day ahead forecast"], demandDf["Source"]):
-        year = str(day)[:4]
+        year = str(day)[: 4]
         if prevyear == year:
             days.append(day)
             means.append(mean)
@@ -158,3 +187,7 @@ def dayMeanDemand(df, column):
 
 if __name__ == "__main__":
     main()
+    pieCharts()
+    yearPieChart('2019')
+    plt.show()
+    pass
