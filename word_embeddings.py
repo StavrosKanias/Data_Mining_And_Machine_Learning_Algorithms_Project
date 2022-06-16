@@ -93,12 +93,7 @@ if __name__ == "__main__":
     datapath = "amazon.csv"
     original = pd.read_csv(datapath)
     original.hist(column='Score')
-    try:
-        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-    except:
-        nltk.download('punkt')
-        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-
+    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
     df = readCSV(datapath)
     df.hist(column="Score")
     plt.show()
@@ -116,6 +111,7 @@ if __name__ == "__main__":
         n_pos_test/len(test_reviews)))
     train_sentences = []
     for review in train_reviews['Text']:
+        review = " ".join(review)
         train_sentences += review_to_sentences(review, tokenizer)
 
     model_name = "MyWord2Vec.model"
