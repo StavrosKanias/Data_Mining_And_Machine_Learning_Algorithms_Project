@@ -44,8 +44,7 @@ def main():
         {"Day": days, "Mean": means, "Day ahead forecast": expectedMeans[:-1], "Source": energy})
     showRandomDays()
     plotdf(demandDf, "Monthly demand", 0)
-    plt.savefig('plots/monthlyDemand.png')
-    # plt.show()
+    plt.show()
 
 
 def pieCharts():
@@ -198,7 +197,7 @@ def plotdf(demandDf, title, figure):
     plt.plot_date(days, means, "r.", xdate=True, markersize=3)
     plt.plot_date(days, expectedDemand, "b.", xdate=True, markersize=3)
     plt.legend(("Day Mean", "Day Predicted", "Energy Produced"))
-    plt.savefig('plots/df' + title + '.png')
+    plt.savefig('plots/' + title + '.png')
 
 
 def dayMeanSource(df):
@@ -234,4 +233,4 @@ if __name__ == "__main__":
     yearPieChart('2019')
     histPlot()
     yearHistPlot('2019')
-    # plt.show()
+    plt.show()

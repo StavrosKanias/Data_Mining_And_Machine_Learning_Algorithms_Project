@@ -143,4 +143,4 @@ for i, label in enumerate(db.labels_):
     if label == -1:
         outIndex.append(i)
 for i in outIndex:
-    print(df.iloc[i])
+    print(str(df.iloc[i].name))
